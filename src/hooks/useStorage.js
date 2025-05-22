@@ -1,55 +1,46 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SearchBar } from "react-native-screens";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
+
+const useStorage = () => {
 // Salvar um item no storage
-export const saveItem = async (key, value) => {
+ const saveItem = async (key, value) => {
   try {
-    const jsonValue = JSON.stringify(value);
-    await AsyncStorage.setItem(key, jsonValue);
+    let passwords = await getItem(key); // Pega o item do storage
+    passwords.push(value); // Adiciona o novo item
+    await AsyncStorage.setItem(key, JSON.stringify(passwords));// Salva o item no storage
   }
   catch (e) {
-    console.error("Error saving data", e);
+    console.error("Erro ao salvar", e);
   }
 }
-// Recuperar um item do storage
-export const getItem = async (key) => {
+// Buscar um item do storage
+ const getItem = async (key) => {
   try {
-    const jsonValue = await AsyncStorage.getItem(key);
-    return jsonValue != null ? JSON.parse(jsonValue) : null;
+    const passwords = await AsyncStorage.getItem(key);
+    return JSON.parse(passwords) || [];
   }
   catch (e) {
-    console.error("Error retrieving data", e);
-    return [];
+    console.error("Error ao buscar storage", e);
+    return []; // array vazio
   }
 }
 // Remover um item do storage
-export const removeItem = async (key) => {
+ const removeItem = async (key, item) => {
   try {
-    await AsyncStorage.removeItem(key);
+    let passwords = await getItem(key); // Pega o item do storage
+    let mypasswords = passwords.filter((password) => {
+      return (password !== item); // Filtra o item que não é igual ao que foi passado
+    }); // Remove o item
+    await AsyncStorage.setItem(key, JSON.stringify(mypasswords)); // Salva o item no storage
+    return mypasswords; // Retorna o item
   }
   catch (e) {
-    console.error("Error removing data", e);
+    console.error("Erro ao deletar", e);
   }
 }
-// Limpar todos os itens do storage
-export const clearStorage = async () => {
-  try {
-    await AsyncStorage.clear();
-  }
-  catch (e) {
-    console.error("Error clearing data", e);
-  }
-}
-// Listar todos os itens do storage
-export const getAllKeys = async () => {
-  try {
-    const keys = await AsyncStorage.getAllKeys();
-    return keys;
-  }
-  catch (e) {
-    console.error("Error retrieving keys", e);
-  }
-
+// Limpar o storage
   return {
     getItem,
     saveItem,
